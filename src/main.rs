@@ -1,40 +1,87 @@
-use std::fs::read_to_string;
+use serde::Deserialize;
 
-struct Comune {
-	codice: u16,
+#[derive(Debug, Deserialize)]
+struct Regione {
+	codice: String,
 	nome: String
 }
 
-fn main() {
-
-	let comuni:Vec<Comune> = riempi_comune();
-	// Print di debug
-	// for elemento in comuni {
-	// 	println!("{}, {}", elemento.codice, elemento.nome)
-	// }
-
-	
+#[derive(Debug, Deserialize)]
+struct RegioneProvincia {
+	codice_regione: String,
+	sigla_provincia: String
 }
 
-fn riempi_comune() -> Vec<Comune> {
+#[derive(Debug, Deserialize)]
+struct Provincia {
+	sigla: String,
+	nome: String
+}
 
-	let mut comuni:Vec<Comune> = vec![];
+#[derive(Debug, Deserialize)]
+struct ProvinciaComune {
+	sigla_provincia: String,
+	codice_comune: String
+}
 
-	let comune_nome_temp:Vec<String> = read_to_string("./gi_comuni_edit.txt")
-		.unwrap() // Panica se ci sono errori di lettura
-		.lines() // Dividi la stringa in un iteratore
-		.map(String::from) // Trasforma le linee in stringhe
-		.collect(); // trasforma tutte le stringhe in una collezione
+#[derive(Debug, Deserialize)]
+struct Comune {
+	codice: String,
+	nome: String
+}
 
-	let mut i:u16 = 0;
-	for citta in comune_nome_temp {
-		i = i + 1;
-		comuni.push(
-			Comune {
-				codice: i,
-				nome: citta
-		});
+
+
+fn main() {
+
+	// REGIONI
+	let mut regioni_csv = csv::Reader::from_path("./gi_regioni.csv").unwrap();
+	let mut regioni_list:Vec<Regione> = vec![];
+
+	for result in regioni_csv.deserialize() {
+		let record: Regione = result.unwrap();
+		println!("{:?}", record);
+		regioni_list.push(record);
 	}
 
-	return comuni;
+	// REGIONIPROVINCIE
+	let mut regioni_csv = csv::Reader::from_path("./gi_regioni-province.csv").unwrap();
+	let mut regioni_provincie_list:Vec<RegioneProvincia> = vec![];
+
+	for result in regioni_csv.deserialize() {
+		let record: RegioneProvincia = result.unwrap();
+		println!("{:?}", record);
+		regioni_provincie_list.push(record);
+	}
+
+	// PROVINCIE
+	let mut provincie_csv = csv::Reader::from_path("./gi_province.csv").unwrap();
+	let mut provincie_list:Vec<Provincia> = vec![];
+
+	for result in provincie_csv.deserialize() {
+		let record: Provincia = result.unwrap();
+		println!("{:?}", record);
+		provincie_list.push(record);
+	}
+
+	// REGIONIPROVINCIE
+	let mut regioni_csv = csv::Reader::from_path("./gi_comuni-province.csv").unwrap();
+	let mut comuni_provincie_list:Vec<ProvinciaComune> = vec![];
+
+	for result in regioni_csv.deserialize() {
+		let record: ProvinciaComune = result.unwrap();
+		println!("{:?}", record);
+		comuni_provincie_list.push(record);
+	}
+
+	// COMUNI
+	let mut comuni_csv = csv::Reader::from_path("./gi_comuni.csv").unwrap();
+	let mut comuni_list:Vec<Comune> = vec![];
+
+	for result in comuni_csv.deserialize() {
+		let record: Comune = result.unwrap();
+		println!("{:?}", record);
+		comuni_list.push(record);
+	}
+	
 }
