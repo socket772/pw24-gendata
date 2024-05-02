@@ -32,7 +32,16 @@ struct Comune {
 	nome: String
 }
 
+struct ComuneCasello {
+	codice_comune: String,
 
+}
+
+struct Audostrada {
+	cod_naz: u8,
+	cod_eu: u8
+	
+}
 
 fn main() {
 
