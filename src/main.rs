@@ -1,5 +1,6 @@
-use std::vec;
 
+use fake::{faker::{self, name::en::Name}, Fake, Faker};
+use rand::Rng;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -37,27 +38,42 @@ struct ComuneCasello {
 
 }
 
+struct Casello {
+	codice: u16,
+	cod_naz_autostrada: u8,
+	
+}
+
 struct Audostrada {
 	cod_naz: u8,
-	cod_eu: u8
-	
+	cod_eu: u8,
+	nome: String,
+	lunghezza: u32,
 }
 
 fn main() {
 
 	// REGIONI
 	let regioni_list:Vec<Regione> = fill_regioni();
+	
 	// REGIONIPROVINCIE
 	let regioni_provincie_list:Vec<RegioneProvincia> = fill_regioni_provincie();
+	
 	// PROVINCIE
 	let provincie_list:Vec<Provincia> = fill_provincie();
+	
 	// PROVINCIECOMUNI
 	let comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_regioni();
+	
 	// COMUNI
 	let comuni_list:Vec<Comune> = fill_comuni();
 
+	// AUTOSTRADE
+	let autostrade_list:Vec<Audostrada> = fill_autostrade();
 
+	// CASELLO
 	
+
 }
 
 fn fill_regioni() -> Vec<Regione> {
@@ -134,4 +150,33 @@ fn fill_comuni() -> Vec<Comune> {
 	}
 
 	comuni_list
+}
+
+// Funzione di generazione dati autostrada
+fn fill_autostrade() -> Vec<Audostrada> {
+
+	let mut rng = rand::thread_rng();
+	
+	let mut autostrade_list:Vec<Audostrada> = vec![];
+
+	// Genera dati
+	for element in 1..=100 {
+		let record: Audostrada = Audostrada {
+			cod_naz: element,
+			cod_eu: element.reverse_bits(),
+			nome: Name().fake(),
+			lunghezza: rng.gen(),
+			
+		};
+
+		autostrade_list.push(record);
+	}
+
+	// Stampa lista
+	println!("\nStampa di Autostrada");
+	for record in autostrade_list.as_slice() {
+		println!("{},{},{},{}", record.cod_naz, record.cod_eu, record.nome, record.lunghezza);
+	}
+	
+	autostrade_list
 }
