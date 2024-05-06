@@ -1,7 +1,10 @@
 
-use fake::{faker::{self, name::en::Name}, Fake, Faker};
+use std::borrow::Borrow;
+
+use geo::Coord;
 use rand::Rng;
 use serde::Deserialize;
+use rand::seq::SliceRandom;
 
 #[derive(Deserialize)]
 struct Regione {
@@ -39,16 +42,23 @@ struct ComuneCasello {
 }
 
 struct Casello {
-	codice: u16,
-	cod_naz_autostrada: u8,
+	codice: u32,
+	nome: String,
+	coordinate: Coord,
+	cod_naz_autostrada: String,
 	
 }
 
 struct Audostrada {
-	cod_naz: u8,
-	cod_eu: u8,
+	cod_naz: String,
+	cod_eu: String,
 	nome: String,
 	lunghezza: u32,
+}
+
+struct CaselloAutostrada {
+	cod_naz: String,
+	cod_casello: u32,
 }
 
 fn main() {
@@ -72,7 +82,12 @@ fn main() {
 	let autostrade_list:Vec<Audostrada> = fill_autostrade();
 
 	// CASELLO
+	let casello_list:Vec<Casello> = fill_casello(autostrade_list.borrow());
 	
+	// CASELLOAUTOSTRADA
+	let casello_autostrada_list:Vec<CaselloAutostrada> = fill_casello_autostrada(casello_list.borrow(), autostrade_list.borrow());
+
+	// Scrittura delle tabelle in formato CSV
 
 }
 
@@ -162,11 +177,10 @@ fn fill_autostrade() -> Vec<Audostrada> {
 	// Genera dati
 	for element in 1..=100 {
 		let record: Audostrada = Audostrada {
-			cod_naz: element,
-			cod_eu: element.reverse_bits(),
-			nome: Name().fake(),
-			lunghezza: rng.gen(),
-			
+			cod_naz: format!("A{}", element),
+			cod_eu: format!("E{}", element),
+			nome: format!("A{}-E{}", element, element),
+			lunghezza: rng.gen()
 		};
 
 		autostrade_list.push(record);
@@ -179,4 +193,54 @@ fn fill_autostrade() -> Vec<Audostrada> {
 	}
 	
 	autostrade_list
+}
+
+// Funzione di generazione dati autostrada
+fn fill_casello(autostrade_list:&Vec<Audostrada>) -> Vec<Casello> {
+
+	let mut rng = rand::thread_rng();
+	
+	let mut caselli_list:Vec<Casello> = vec![];
+
+	// Genera dati
+	for element in 1..=1000 {
+		let record: Casello = Casello {
+			codice: element,
+			nome: format!("{}", element),
+			coordinate: Coord { x: rng.gen(), y: rng.gen() },
+			cod_naz_autostrada: autostrade_list.choose(&mut rng).unwrap().cod_naz.clone(),
+		};
+
+		caselli_list.push(record);
+	}
+
+	// Stampa lista
+	println!("\nStampa di Autostrada");
+	for record in caselli_list.as_slice() {
+		println!("{},{}", record.cod_naz_autostrada, record.codice);
+	}
+	
+	caselli_list
+}
+
+fn fill_casello_autostrada(casello_list:&Vec<Casello>, autostrade_list:&Vec<Audostrada>) -> Vec<CaselloAutostrada> {
+	let mut rng = rand::thread_rng();
+	
+	let mut casello_autostrada_list:Vec<CaselloAutostrada> = vec![];
+
+	for element in 1..=10000 {
+		let record: CaselloAutostrada = CaselloAutostrada {
+			cod_naz: autostrade_list.choose(&mut rng).unwrap().cod_naz.clone(),
+			cod_casello: casello_list.choose(&mut rng).unwrap().codice,
+		};
+
+		casello_autostrada_list.push(record);
+	}
+
+	println!("\nStampa di Autostrada");
+	for record in casello_autostrada_list.as_slice() {
+		println!("{},{}", record.cod_casello, record.cod_naz);
+	}
+
+	casello_autostrada_list
 }
