@@ -3,7 +3,7 @@ use rand::Rng;
 use serde::Deserialize;
 use rand::seq::SliceRandom;
 use std::io::Write;
-use fake::{faker::chrono::en::{Date, DateTime}, Fake};
+use fake::{faker::chrono::en::{Date}, Fake};
 
 #[derive(Deserialize)]
 struct Regione {
@@ -62,16 +62,16 @@ struct Audostrada {
 fn main() {
 
 	// REGIONI
-	let regioni_list:Vec<Regione> = fill_regioni();
+	let _regioni_list:Vec<Regione> = fill_regioni();
 	
 	// REGIONIPROVINCIE
-	let regioni_provincie_list:Vec<RegioneProvincia> = fill_regioni_provincie();
+	let _regioni_provincie_list:Vec<RegioneProvincia> = fill_regioni_provincie();
 	
 	// PROVINCIE
-	let provincie_list:Vec<Provincia> = fill_provincie();
+	let _provincie_list:Vec<Provincia> = fill_provincie();
 	
 	// PROVINCIECOMUNI
-	let comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_regioni();
+	let _comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_regioni();
 	
 	// COMUNI
 	let comuni_list:Vec<Comune> = fill_comuni();
