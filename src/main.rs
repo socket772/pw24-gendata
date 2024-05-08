@@ -17,8 +17,14 @@ struct RegioneProvincia {
 	sigla_provincia: String
 }
 
-#[derive(Deserialize)]
 struct Provincia {
+	sigla: String,
+	regione: String,
+	nome: String
+}
+
+#[derive(Deserialize)]
+struct ProvinciaTemp {
 	sigla: String,
 	nome: String
 }
@@ -29,8 +35,14 @@ struct ProvinciaComune {
 	codice_comune: String
 }
 
-#[derive(Deserialize)]
 struct Comune {
+	codice: String,
+	provincia: String,
+	nome: String
+}
+
+#[derive(Deserialize)]
+struct ComuneTemp {
 	codice: String,
 	nome: String
 }
@@ -43,6 +55,7 @@ struct ComuneCasello {
 
 struct Casello {
 	codice: u32,
+	codice_comune: String,
 	nome: String,
 	x: f64,
 	y: f64,
@@ -71,7 +84,7 @@ fn main() {
 	let _provincie_list:Vec<Provincia> = fill_provincie();
 	
 	// PROVINCIECOMUNI
-	let _comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_regioni();
+	let _comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_comuni();
 	
 	// COMUNI
 	let comuni_list:Vec<Comune> = fill_comuni();
@@ -80,7 +93,7 @@ fn main() {
 	let autostrade_list:Vec<Audostrada> = fill_autostrade();
 
 	// CASELLO
-	let caselli_list:Vec<Casello> = fill_caselli(autostrade_list.borrow());
+	let caselli_list:Vec<Casello> = fill_caselli(autostrade_list.borrow(), comuni_list.borrow());
 	
 	// COMUNECASELLO
 	let comuni_caselli_list:Vec<ComuneCasello> = fill_comuni_caselli(&comuni_list, &caselli_list);
@@ -112,14 +125,13 @@ fn main() {
 		writeln!(autostrade_writer, "{},{},{},{}", record.cod_naz, record.cod_eu, record.nome, record.lunghezza).unwrap();
 	}
 
-	// scrittura di comuni_caselli_list
-	let mut comuni_caselli_writer = File::create("./output/comuni_caselli.csv").unwrap();
-	writeln!(comuni_caselli_writer, "codice_comune,codice_casello,cod_naz").unwrap();
+	// scrittura di comuni_list
+	let mut comuni_writer = File::create("./output/comuni_caselli.csv").unwrap();
+	writeln!(comuni_writer, "codice,provincia,nome").unwrap();
 	
-	// println!("\nStampa di comuni_caselli_list");
-	for record in comuni_caselli_list {
-		println!("{},{},{}", record.codice_casello, record.cod_naz, record.codice_comune);
-		writeln!(comuni_caselli_writer, "{},{},{}", record.codice_comune, record.codice_casello, record.cod_naz).unwrap();
+	// println!("\nStampa di comuni_list");
+	for record in comuni_list {
+		writeln!(comuni_writer, "{},{},{}", record.codice, record.provincia, record.nome).unwrap();
 	}
 	
 
@@ -156,21 +168,43 @@ fn fill_regioni_provincie() -> Vec<RegioneProvincia> {
 }
 
 fn fill_provincie() -> Vec<Provincia> {
+
+	let mut regioni_list:Vec<Regione> = fill_regioni();
+
+	let regioni_provincie_list:Vec<RegioneProvincia> = fill_regioni_provincie();
+
 	let mut provincie_csv = csv::Reader::from_path("./gi_province.csv").unwrap();
+	let mut provincie_temp_list:Vec<ProvinciaTemp> = vec![];
 	let mut provincie_list:Vec<Provincia> = vec![];
 
 	// println!("\nStampa di Provincia");
 
 	for result in provincie_csv.deserialize() {
-		let record: Provincia = result.unwrap();
+		let record: ProvinciaTemp = result.unwrap();
 		// println!("{},{}", record.sigla, record.nome);
-		provincie_list.push(record);
+		provincie_temp_list.push(record);
+	}
+
+	for provincia_temp in provincie_temp_list.as_slice() {
+		for regione_provincia in regioni_provincie_list.as_slice() {
+			for regione in regioni_list.as_slice() {
+				if regione.codice == regione_provincia.codice_regione && regione_provincia.sigla_provincia == provincia_temp.sigla {
+					let provincia_element:Provincia = Provincia {
+						sigla: regione_provincia.sigla_provincia.clone(),
+						regione: regione_provincia.codice_regione.clone(),
+						nome: provincia_temp.nome.clone(),
+					};
+					provincie_list.push(provincia_element);
+				}
+			}
+		}
 	}
 
 	provincie_list
 }
 
-fn fill_provincie_regioni() -> Vec<ProvinciaComune> {
+fn fill_provincie_comuni() -> Vec<ProvinciaComune> {
+
 	let mut regioni_csv = csv::Reader::from_path("./gi_province-comuni.csv").unwrap();
 	let mut comuni_provincie_list:Vec<ProvinciaComune> = vec![];
 
@@ -187,14 +221,35 @@ fn fill_provincie_regioni() -> Vec<ProvinciaComune> {
 
 // Funzione generazione comuni
 fn fill_comuni() -> Vec<Comune> {
+
+	let provincie_list:Vec<Provincia> = fill_provincie();
+	let comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_comuni();
+
+
 	let mut comuni_csv = csv::Reader::from_path("./gi_comuni.csv").unwrap();
+	let mut comuni_list_temp:Vec<ComuneTemp> = vec![];
 	let mut comuni_list:Vec<Comune> = vec![];
 
 	// println!("\nStampa di Comune");
 	for result in comuni_csv.deserialize() {
-		let record: Comune = result.unwrap();
+		let record: ComuneTemp = result.unwrap();
 		// println!("{},{}", record.codice, record.nome);
-		comuni_list.push(record);
+		comuni_list_temp.push(record);
+	}
+
+	for provincia in provincie_list.as_slice() {
+		for comune_temp in comuni_list_temp.as_slice() {
+			for comune_provincia in comuni_provincie_list.as_slice() {
+				if provincia.sigla == comune_provincia.sigla_provincia && comune_provincia.codice_comune == comune_temp.codice {
+					let comune_element:Comune = Comune {
+						codice: comune_provincia.codice_comune.clone(),
+						provincia: provincia.sigla.clone(),
+						nome: comune_temp.nome.clone(),
+					};
+					comuni_list.push(comune_element);
+				}
+			}
+		}
 	}
 
 	comuni_list
@@ -222,7 +277,7 @@ fn fill_autostrade() -> Vec<Audostrada> {
 }
 
 // Funzione di generazione dati autostrada
-fn fill_caselli(autostrade_list:&Vec<Audostrada>) -> Vec<Casello> {
+fn fill_caselli(autostrade_list:&Vec<Audostrada>, comuni_list:&Vec<Comune>) -> Vec<Casello> {
 
 	let mut rng = rand::thread_rng();
 	
@@ -233,6 +288,7 @@ fn fill_caselli(autostrade_list:&Vec<Audostrada>) -> Vec<Casello> {
 		let mut record: Casello = Casello {
 			codice: element,
 			nome: format!("{}", element),
+			codice_comune: comuni_list.choose(&mut rng).unwrap().codice.clone(),
 			x: 10000.0 * (rng.gen::<f64>() - 0.5),
 			y: 10000.0 * (rng.gen::<f64>() - 0.5),
 			cod_naz: autostrade_list.choose(&mut rng).unwrap().cod_naz.clone(),
