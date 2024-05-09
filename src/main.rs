@@ -5,54 +5,58 @@ use rand::seq::SliceRandom;
 use std::io::Write;
 use fake::{faker::chrono::en::{Date}, Fake};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Regione {
 	codice: String,
 	nome: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct RegioneProvincia {
 	codice_regione: String,
 	sigla_provincia: String
 }
 
+#[derive(Debug)]
 struct Provincia {
 	sigla: String,
 	regione: String,
 	nome: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct ProvinciaTemp {
 	sigla: String,
 	nome: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct ProvinciaComune {
 	sigla_provincia: String,
 	codice_comune: String
 }
 
+#[derive(Debug)]
 struct Comune {
 	codice: String,
 	provincia: String,
 	nome: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct ComuneTemp {
 	codice: String,
 	nome: String
 }
 
+#[derive(Debug)]
 struct ComuneCasello {
 	codice_comune: String,
 	codice_casello: u32,
 	cod_naz: String
 }
 
+#[derive(Debug)]
 struct Casello {
 	codice: u32,
 	codice_comune: String,
@@ -64,6 +68,7 @@ struct Casello {
 	data_automazione: String,
 }
 
+#[derive(Debug)]
 struct Audostrada {
 	cod_naz: String,
 	cod_eu: String,
@@ -81,7 +86,7 @@ fn main() {
 	let _regioni_provincie_list:Vec<RegioneProvincia> = fill_regioni_provincie();
 	
 	// PROVINCIE
-	let _provincie_list:Vec<Provincia> = fill_provincie();
+	let provincie_list:Vec<Provincia> = fill_provincie();
 	
 	// PROVINCIECOMUNI
 	let _comuni_provincie_list:Vec<ProvinciaComune> = fill_provincie_comuni();
@@ -108,27 +113,29 @@ fn main() {
 	// scrittura di caselli_list
 	let mut caselli_writer = File::create("./output/caselli_list.csv").unwrap();
 	writeln!(caselli_writer, "codice,nome,x,y,cod_naz,is_automatico,data_automazione").unwrap();
-	
 	// println!("\nStampa di caselli_list");
 	for record in caselli_list {
-		println!("{},{},{},{},{},{},{}", record.codice, record.nome, record.x, record.y, record.cod_naz, record.is_automatico, record.data_automazione);
 		writeln!(caselli_writer, "{},{},{},{},{},{},{}", record.codice, record.nome, record.x, record.y, record.cod_naz, record.is_automatico, record.data_automazione).unwrap();
 	}
 
 	// Scrittura autostrade_list
 	let mut autostrade_writer = File::create("./output/autostrade_list.csv").unwrap();
 	writeln!(autostrade_writer, "cod_naz,cod_eu,nome,lunghezza").unwrap();
-	
 	// println!("\nStampa di autostrade_list");
 	for record in autostrade_list {
-		println!("{},{},{},{}", record.cod_naz, record.cod_eu, record.nome, record.lunghezza);
 		writeln!(autostrade_writer, "{},{},{},{}", record.cod_naz, record.cod_eu, record.nome, record.lunghezza).unwrap();
 	}
 
+	// Scrittura provincie_list
+	let mut provincie_writer = File::create("./output/provincie_list.csv").unwrap();
+	writeln!(provincie_writer, "sigla,regione,nome").unwrap();
+	for record in provincie_list {
+		writeln!(provincie_writer, "{},{},{}", record.sigla, record.regione, record.nome).unwrap();
+	}
+
 	// scrittura di comuni_list
-	let mut comuni_writer = File::create("./output/comuni_caselli.csv").unwrap();
+	let mut comuni_writer = File::create("./output/comuni_list.csv").unwrap();
 	writeln!(comuni_writer, "codice,provincia,nome").unwrap();
-	
 	// println!("\nStampa di comuni_list");
 	for record in comuni_list {
 		writeln!(comuni_writer, "{},{},{}", record.codice, record.provincia, record.nome).unwrap();
@@ -186,6 +193,7 @@ fn fill_provincie() -> Vec<Provincia> {
 	}
 
 	for provincia_temp in provincie_temp_list.as_slice() {
+		println!("{:?}", provincia_temp);
 		for regione_provincia in regioni_provincie_list.as_slice() {
 			for regione in regioni_list.as_slice() {
 				if regione.codice == regione_provincia.codice_regione && regione_provincia.sigla_provincia == provincia_temp.sigla {
@@ -238,6 +246,7 @@ fn fill_comuni() -> Vec<Comune> {
 	}
 
 	for provincia in provincie_list.as_slice() {
+		println!("{:?}", provincia);
 		for comune_temp in comuni_list_temp.as_slice() {
 			for comune_provincia in comuni_provincie_list.as_slice() {
 				if provincia.sigla == comune_provincia.sigla_provincia && comune_provincia.codice_comune == comune_temp.codice {
@@ -314,7 +323,7 @@ fn fill_comuni_caselli(comuni_list:&Vec<Comune>, caselli_list:&Vec<Casello>) -> 
 	for _ in 1..=10000 {
 		let record: ComuneCasello = ComuneCasello {
 			cod_naz: caselli_list.choose(&mut rng).unwrap().cod_naz.clone(),
-			codice_casello: caselli_list.choose(&mut rng).unwrap().codice.clone(),
+			codice_casello: caselli_list.choose(&mut rng).unwrap().codice,
 			codice_comune: comuni_list.choose(&mut rng).unwrap().codice.clone(),
 		};
 
